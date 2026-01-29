@@ -9,7 +9,7 @@ export async function POST(req) {
     if (!email) {
       return Response.json(
         { success: false, message: "Email is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -20,12 +20,16 @@ export async function POST(req) {
     const mentor = await db.collection("AluminiData").findOne({ email });
 
     const user = student || mentor;
-    const collectionName = student ? "StudentData" : mentor ? "AluminiData" : null;
+    const collectionName = student
+      ? "StudentData"
+      : mentor
+        ? "AluminiData"
+        : null;
 
     if (!user) {
       return Response.json(
         { success: false, message: "User not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -39,7 +43,7 @@ export async function POST(req) {
           resetPasswordToken: token,
           resetPasswordExpires: expiry,
         },
-      }
+      },
     );
 
     const transporter = nodemailer.createTransport({
@@ -50,8 +54,8 @@ export async function POST(req) {
       },
     });
 
-    const resetLink = `${process.env.NEXT_PUBLIC_HOST}resetPassword?token=${token}`;
-
+    const baseUrl = process.env.NEXT_PUBLIC_HOST?.replace(/\/$/, "");
+    const resetLink = `${baseUrl}/resetPassword?token=${token}`;
 
     await transporter.sendMail({
       to: email,
@@ -68,12 +72,11 @@ export async function POST(req) {
       success: true,
       message: "Password reset link sent to your email",
     });
-
   } catch (error) {
     console.error("FORGOT PASSWORD ERROR:", error);
     return Response.json(
       { success: false, message: "Server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

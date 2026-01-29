@@ -45,8 +45,11 @@ const LoginPage = () => {
 
       if (res.ok && data.success) {
         // Store token in localStorage for client-side checking
-        localStorage.setItem("token", data.token || "authenticated");
-        localStorage.setItem("user", JSON.stringify(data.user));
+        if (res.ok && data.success) {
+          alert("Login Successful!");
+          router.push("/");
+        }
+
         alert("Login Successful!");
         router.push("/");
       } else {
@@ -144,7 +147,16 @@ const LoginPage = () => {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <div className="flex justify-end pt-1"><p><Link className="font-bold text-blue-600 hover:underline text-sm" href="/forgotPassword">Forgot Password?</Link></p></div>
+        <div className="flex justify-end pt-1">
+          <p>
+            <Link
+              className="font-bold text-blue-600 hover:underline text-sm"
+              href="/forgotPassword"
+            >
+              Forgot Password?
+            </Link>
+          </p>
+        </div>
         <div className="text-center mt-4">
           <p className="text-sm text-gray-600">
             Don't have an account?{" "}

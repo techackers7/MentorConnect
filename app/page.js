@@ -197,7 +197,7 @@ export default function Home() {
         </section>
       </main>
       <footer className="bg-[#cfd9da]">
-        <div className="flex justify-center p-4 font-extrabold">
+        <div className="flex justify-center p-4 font-extrabold text-center text-sm">
           <p>©2026 Bridge: Connecting Futures. All rights reserved.</p>
         </div>
       </footer>

@@ -576,7 +576,6 @@ const RegistrationContent = () => {
                   id="jobTitle"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
-                  required
                   className="w-full rounded-xl bg-[#ab9cdd] px-4 py-2 text-white focus:outline-none"
                 />
               </div>
@@ -663,7 +662,6 @@ const RegistrationContent = () => {
                     value={hackathonInput}
                     onChange={(e) => setHackathonInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addHackathon()}
-                    required
                     className="flex-1 rounded-xl bg-[#ab9cdd] px-4 py-2 text-white focus:outline-none"
                   />
                   <button

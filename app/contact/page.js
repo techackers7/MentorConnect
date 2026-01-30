@@ -69,6 +69,7 @@ const Contact = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-[#fbfaf4] p-6 md:p-12">
       <div className="max-w-6xl mx-auto space-y-16">
         <section className="bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
@@ -180,8 +181,16 @@ const Contact = () => {
             ))}
           </div>
         </section>
+
       </div>
+      
     </div>
+    <footer className="bg-blue-900 text-blue-100">
+        <div className="flex justify-center p-4 font-extrabold text-center text-sm md:text-lg">
+          <p>©2026 Bridge: Connecting Futures. All rights reserved.</p>
+        </div>
+      </footer>
+    </>
   );
 };
 

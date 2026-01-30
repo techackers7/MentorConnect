@@ -13,7 +13,7 @@ const Navbar = () => {
   useEffect(() => {
   const checkAuth = async () => {
     try {
-      const res = await fetch("/api/me");
+      const res = await fetch("/api/me",{credentials:"include",});
       setIsLoggedIn(res.ok);
     } catch {
       setIsLoggedIn(false);
@@ -25,7 +25,11 @@ const Navbar = () => {
 
 
   const handleLogout = async () => {
-  await fetch("/api/logout", { method: "POST" });
+  await fetch("/api/logout", {
+  method: "POST",
+  credentials: "include",
+});
+
   setIsLoggedIn(false);
   router.replace("/login");
 };

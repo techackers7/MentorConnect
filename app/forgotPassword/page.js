@@ -9,6 +9,7 @@ const page = () => {
     const res = await fetch("/api/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email }),
     });
 

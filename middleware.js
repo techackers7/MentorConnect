@@ -23,6 +23,7 @@ export function middleware(request) {
   if ((path === "/login" || path === "/registration") && token) {
     return NextResponse.redirect(new URL("/", request.nextUrl));
   }
+  return NextResponse.next(); 
 }
 
 export const config = {

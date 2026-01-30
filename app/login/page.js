@@ -11,57 +11,75 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   try {
+  //     // DEMO MODE: Test login without database
+  //     if (email === "demo@test.com" && password === "demo123") {
+  //       const token = "demo-token-" + Date.now();
+  //       console.log("Demo login successful, token set:", token);
+  //       alert("Demo Login Successful!");
+  //       router.push("/");
+  //       return;
+  //     }
+
+  //     // REAL LOGIN: Try actual API
+  //     const res = await fetch("/api/login", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ email, password, role }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (res.ok && data.success) {
+  //       // Store token in localStorage for client-side checking
+  //       if (res.ok && data.success) {
+  //         alert("Login Successful!");
+  //         router.push("/");
+  //       }
+
+  //       alert("Login Successful!");
+  //       router.push("/");
+  //     } else {
+  //       alert(data.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     alert("Something went wrong. Please check your connection.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      // DEMO MODE: Test login without database
-      if (email === "demo@test.com" && password === "demo123") {
-        const token = "demo-token-" + Date.now();
-        localStorage.setItem("token", token);
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            name: "Demo User",
-            email: email,
-            role: role,
-          }),
-        );
-        console.log("Demo login successful, token set:", token);
-        alert("Demo Login Successful!");
-        router.push("/");
-        return;
-      }
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, role }),
+    });
 
-      // REAL LOGIN: Try actual API
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
-      });
+    const data = await res.json();
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        // Store token in localStorage for client-side checking
-        if (res.ok && data.success) {
-          alert("Login Successful!");
-          router.push("/");
-        }
-
-        alert("Login Successful!");
-        router.push("/");
-      } else {
-        alert(data.message);
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("Something went wrong. Please check your connection.");
-    } finally {
-      setLoading(false);
+    if (res.ok && data.success) {
+      alert("Login Successful!");
+      router.replace("/"); // ✅ IMPORTANT
+    } else {
+      alert(data.message);
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Something went wrong. Please check your connection.");
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
     <section className="min-h-screen bg-[#fbfaf4] flex items-center justify-center py-20">
       <div className="w-full max-w-md bg-white rounded-4xl shadow-2xl p-10">

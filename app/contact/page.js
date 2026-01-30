@@ -23,7 +23,7 @@ const Contact = () => {
   const teamMembers = [
     { id: 1, name: "Girish Mahapatra", photo: "/team-girish.jpg" },
     { id: 2, name: "Abhisek Panda", photo: "/AbhiPic.jpg" },
-    { id: 3, name: "Saranya Sarangi", photo: "/WhatsApp Image 2026-01-30 at 11.18.46 PM.jpg" },
+    { id: 3, name: "Saranya Sarangi", photo: "/Saranya.jpeg" },
     { id: 4, name: "Sunita Satapathy", photo: "/team-sunita.jpg" },
   ];
 

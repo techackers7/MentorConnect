@@ -31,7 +31,8 @@ const Navbar = () => {
 });
 
   setIsLoggedIn(false);
-  router.replace("/login");
+  window.location.href = "/login";
+
 };
 
 

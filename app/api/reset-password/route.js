@@ -8,7 +8,7 @@ export async function POST(req) {
     const client = await clientPromise;
     const db = client.db("Bridge");
 
-    const collections = ["StudentData", "AluminiData"];
+    const collections = ["StudentData", "AlumniData"];
     let user, collectionName;
 
     for (const name of collections) {

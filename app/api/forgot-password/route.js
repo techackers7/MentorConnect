@@ -17,13 +17,13 @@ export async function POST(req) {
     const db = client.db("Bridge");
 
     const student = await db.collection("StudentData").findOne({ email });
-    const mentor = await db.collection("AluminiData").findOne({ email });
+    const mentor = await db.collection("AlumniData").findOne({ email });
 
     const user = student || mentor;
     const collectionName = student
       ? "StudentData"
       : mentor
-        ? "AluminiData"
+        ? "AlumniData"
         : null;
 
     if (!user) {

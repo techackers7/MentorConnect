@@ -69,7 +69,8 @@ const LoginPage = () => {
 
     if (res.ok && data.success) {
       alert("Login Successful!");
-      router.replace("/"); // ✅ IMPORTANT
+      router.replace("/");
+      router.refresh();
     } else {
       alert(data.message);
     }

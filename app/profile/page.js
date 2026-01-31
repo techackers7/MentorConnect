@@ -5,12 +5,12 @@ const ProfileContent = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [open, setOpen] = useState(false);
 
-  const [skillInput, setSkillInput] = useState("");
-  const [companyInput, setCompanyInput] = useState("");
-  const [hackathonInput, setHackathonInput] = useState("");
+  const [skillString, setSkillString] = useState("");
+  const [companyString, setCompanyString] = useState("");
+  const [hackathonString, setHackathonString] = useState("");
 
+  // --- Options from your Registration Page ---
   const degreeOptions = ["Select", "BTech", "MTech", "MBA", "PhD"];
   const levelOptions = [
     "Select",
@@ -25,6 +25,7 @@ const ProfileContent = () => {
     "3–5 hrs/week",
     "Flexible",
   ];
+
   const branches = [
     "Select",
     "Computer Science Engineering",
@@ -60,7 +61,26 @@ const ProfileContent = () => {
         const res = await fetch("/api/profile");
         const data = await res.json();
         if (data.success) {
-          setUserData(data.user);
+          const user = data.user;
+          setUserData(user);
+
+          setSkillString(
+            Array.isArray(user.skills)
+              ? user.skills.join(", ")
+              : user.skills || "",
+          );
+          setCompanyString(
+            Array.isArray(user.companies)
+              ? user.companies.join(", ")
+              : user.companies || "",
+          );
+          setHackathonString(
+            Array.isArray(user.hackathons)
+              ? user.hackathons.join(", ")
+              : user.hackathons || "",
+          );
+        } else {
+          // Handle error silently or alert
         }
       } catch (err) {
         console.error(err);
@@ -70,18 +90,6 @@ const ProfileContent = () => {
     };
     fetchProfile();
   }, []);
-
-  const addItem = (field, value, setInput) => {
-    if (!value.trim()) return;
-    const currentArray = userData[field] || [];
-    setUserData({ ...userData, [field]: [...currentArray, value.trim()] });
-    setInput("");
-  };
-
-  const removeItem = (field, index) => {
-    const newArray = userData[field].filter((_, i) => i !== index);
-    setUserData({ ...userData, [field]: newArray });
-  };
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -95,118 +103,191 @@ const ProfileContent = () => {
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) return alert("File too big (Max 2MB)");
+      if (file.size > 2 * 1024 * 1024) {
+        alert("File size too big (Max 2MB)");
+        return;
+      }
       const base64 = await convertToBase64(file);
       setUserData({ ...userData, image: base64 });
     }
   };
 
   const handleSave = async () => {
-    if (!userData.name?.trim()) return alert("Name is required");
-    if (!userData.degree || userData.degree === "Select")
-      return alert("Degree is required");
-    if (!userData.branch || userData.branch === "Select")
-      return alert("Branch is required");
-    const skills = userData.skills || [];
-    if (skills.length === 0) return alert("Please add at least one Skill");
+    const finalSkills = skillString
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== "");
+    const finalCompanies = companyString
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== "");
+    const finalHackathons = hackathonString
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== "");
 
-    if (userData.role === "mentor") {
-      if (!userData.YOG) return alert("Year of Graduation is required");
-      if (!userData.level || userData.level === "Select")
-        return alert("Target Student Level is required");
-      if (!userData.Commitment || userData.Commitment === "Select")
-        return alert("Time Commitment is required");
-      if (!userData.serviceType) return alert("Service Type is required");
-    }
+    const updatedData = {
+      ...userData,
+      skills: finalSkills,
+      companies: finalCompanies,
+      hackathons: finalHackathons,
+    };
+
+    const { _id, ...cleanData } = updatedData;
 
     try {
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(cleanData),
       });
       const data = await res.json();
       if (data.success) {
         alert("Profile Updated Successfully!");
+        setUserData(updatedData);
         setIsEditing(false);
       } else {
-        alert("Update failed: " + data.message);
+        alert("Update failed.");
       }
     } catch (err) {
-      alert("Something went wrong.");
+      console.error(err);
     }
   };
 
   if (loading)
     return (
-      <div className="min-h-screen flex justify-center items-center text-blue-800 font-bold text-xl">
-        Loading Profile...
+      <div className="min-h-screen flex justify-center items-center">
+        Loading...
       </div>
     );
   if (!userData)
     return (
       <div className="min-h-screen flex justify-center items-center">
-        User not found. Please Login.
+        User not found
       </div>
     );
 
   const getProfileImage = () => {
     if (userData.image) return userData.image;
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=0D8ABC&color=fff&size=200&bold=true`;
+    const name = userData.name || "User";
+    const bgColor = userData.role === "mentor" ? "0D8ABC" : "6366f1";
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bgColor}&color=fff&size=200&bold=true`;
   };
 
   return (
     <div className="min-h-screen bg-[#fbfaf4]">
       <div className="max-w-5xl mx-auto py-10 px-4">
         <div className="bg-white rounded-3xl shadow-xl p-8">
+          {/* Header & Image */}
           <div className="flex flex-col items-center mb-10">
-            <div className="relative">
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-md">
               <img
                 src={getProfileImage()}
-                className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 shadow-md"
+                alt="Profile"
+                className="w-full h-full object-cover"
               />
-              {isEditing && (
+            </div>
+
+            {isEditing && (
+              <label className="mt-3 cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition shadow-sm border border-gray-300">
                 <input
                   type="file"
-                  className="absolute bottom-0 right-0 w-8 cursor-pointer"
+                  hidden
+                  accept="image/*"
                   onChange={handleImageChange}
                 />
-              )}
-            </div>
-            <h1 className="text-3xl font-bold mt-4 text-gray-800">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-600"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Change Photo
+              </label>
+            )}
+
+            <h1 className="text-3xl font-bold text-gray-800 mt-4">
               {userData.name}
             </h1>
-            <span className="capitalize px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold mt-2">
+            <span
+              className={`mt-1 px-3 py-1 rounded-full text-sm font-semibold capitalize ${
+                userData.role === "mentor"
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-purple-100 text-purple-800"
+              }`}
+            >
               {userData.role}
             </span>
+
             <button
               onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-              className={`mt-6 px-8 py-2 rounded-full font-bold text-white transition-all shadow-lg ${isEditing ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
+              className={`mt-6 px-6 py-2 rounded-full font-bold text-white transition-all shadow-lg flex items-center gap-2 ${
+                isEditing
+                  ? "bg-green-600 hover:bg-green-700 hover:shadow-green-500/30"
+                  : "bg-blue-600 hover:bg-blue-700 hover:shadow-blue-500/30"
+              }`}
             >
-              {isEditing ? "Save Changes" : "Edit Profile"}
+              {isEditing ? (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Save Changes
+                </>
+              ) : (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                  Edit Profile
+                </>
+              )}
             </button>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 text-gray-700">
+            {/* Common Info */}
             <div className="space-y-2">
-              <label className="font-bold">Full Name *</label>
+              <label className="font-bold">Full Name</label>
               <input
                 disabled={!isEditing}
                 value={userData.name || ""}
                 onChange={(e) =>
                   setUserData({ ...userData, name: e.target.value })
                 }
-                className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
               />
             </div>
+
             <div className="space-y-2">
               <label className="font-bold">Email (Read Only)</label>
               <input
                 disabled
                 value={userData.email || ""}
-                className="w-full p-3 border rounded-xl bg-gray-200 cursor-not-allowed"
+                className="w-full p-3 rounded-xl bg-gray-200 border border-gray-200 text-gray-500 cursor-not-allowed"
               />
             </div>
+
             <div className="space-y-2">
               <label className="font-bold">Contact</label>
               <input
@@ -215,61 +296,52 @@ const ProfileContent = () => {
                 onChange={(e) =>
                   setUserData({ ...userData, contact: e.target.value })
                 }
-                className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
               />
             </div>
 
+            {/* Degree is now available for both Students and Mentors */}
             <div className="space-y-2">
-              <label className="font-bold">Degree *</label>
+              <label className="font-bold">Degree</label>
               <select
                 disabled={!isEditing}
                 value={userData.degree || ""}
                 onChange={(e) =>
                   setUserData({ ...userData, degree: e.target.value })
                 }
-                className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
               >
-                {degreeOptions.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
+                {degreeOptions.map((opt) => (
+                  <option key={opt} value={opt === "Select" ? "" : opt}>
+                    {opt}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="space-y-2 relative">
-              <label className="font-bold">Branch *</label>
-              <button
-                type="button"
+            <div className="space-y-2">
+              <label className="font-bold">Branch</label>
+              <select
                 disabled={!isEditing}
-                onClick={() => setOpen(!open)}
-                className="w-full p-3 border rounded-xl text-left disabled:bg-gray-100 flex justify-between items-center"
+                value={userData.branch || ""}
+                onChange={(e) =>
+                  setUserData({ ...userData, branch: e.target.value })
+                }
+                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
               >
-                <span>{userData.branch || "Select Branch"}</span>
-                {isEditing && <span className="text-xs">▼</span>}
-              </button>
-              {open && isEditing && (
-                <div className="absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-white border rounded-xl shadow-lg">
-                  {branches.map((b) => (
-                    <div
-                      key={b}
-                      onClick={() => {
-                        setUserData({ ...userData, branch: b });
-                        setOpen(false);
-                      }}
-                      className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
-                    >
-                      {b}
-                    </div>
-                  ))}
-                </div>
-              )}
+                {branches.map((opt) => (
+                  <option key={opt} value={opt === "Select" ? "" : opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* Mentor Specific Fields */}
             {userData.role === "mentor" && (
               <>
                 <div className="space-y-2">
-                  <label className="font-bold">Graduation Year *</label>
+                  <label className="font-bold">Year of Graduation</label>
                   <input
                     type="number"
                     disabled={!isEditing}
@@ -277,22 +349,24 @@ const ProfileContent = () => {
                     onChange={(e) =>
                       setUserData({ ...userData, YOG: e.target.value })
                     }
-                    className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="font-bold">Job Title</label>
+                  <label className="font-bold">Current Job Title</label>
                   <input
                     disabled={!isEditing}
                     value={userData.jobTitle || ""}
                     onChange={(e) =>
                       setUserData({ ...userData, jobTitle: e.target.value })
                     }
-                    className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="font-bold">Company</label>
+                  <label className="font-bold">Current Company</label>
                   <input
                     disabled={!isEditing}
                     value={userData.currentCompany || ""}
@@ -302,11 +376,12 @@ const ProfileContent = () => {
                         currentCompany: e.target.value,
                       })
                     }
-                    className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="font-bold">Experience (Years)</label>
+                  <label className="font-bold">Years of Experience</label>
                   <input
                     type="number"
                     disabled={!isEditing}
@@ -314,174 +389,115 @@ const ProfileContent = () => {
                     onChange={(e) =>
                       setUserData({ ...userData, experience: e.target.value })
                     }
-                    className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="font-bold">Target Level *</label>
+                  <label className="font-bold">Target Student Level</label>
                   <select
                     disabled={!isEditing}
                     value={userData.level || ""}
                     onChange={(e) =>
                       setUserData({ ...userData, level: e.target.value })
                     }
-                    className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                   >
-                    {levelOptions.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
+                    {levelOptions.map((opt) => (
+                      <option key={opt} value={opt === "Select" ? "" : opt}>
+                        {opt}
                       </option>
                     ))}
                   </select>
                 </div>
+
                 <div className="space-y-2">
-                  <label className="font-bold">Commitment *</label>
+                  <label className="font-bold">Time Commitment</label>
                   <select
                     disabled={!isEditing}
                     value={userData.Commitment || ""}
                     onChange={(e) =>
                       setUserData({ ...userData, Commitment: e.target.value })
                     }
-                    className="w-full p-3 border rounded-xl disabled:bg-gray-100"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                   >
-                    {commitmentOptions.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
+                    {commitmentOptions.map((opt) => (
+                      <option key={opt} value={opt === "Select" ? "" : opt}>
+                        {opt}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                  <label className="font-bold">Previous Companies</label>
-                  <div className="flex gap-2">
-                    <input
-                      disabled={!isEditing}
-                      value={companyInput}
-                      onChange={(e) => setCompanyInput(e.target.value)}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" &&
-                        addItem("companies", companyInput, setCompanyInput)
-                      }
-                      placeholder="Add company..."
-                      className="w-full p-2 border rounded-xl disabled:bg-gray-100"
-                    />
-                    <button
-                      disabled={!isEditing}
-                      onClick={() =>
-                        addItem("companies", companyInput, setCompanyInput)
-                      }
-                      className="bg-blue-600 text-white px-4 rounded-xl disabled:opacity-50"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {userData.companies?.map((c, i) => (
-                      <span
-                        key={i}
-                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                      >
-                        {c}{" "}
-                        {isEditing && (
-                          <button
-                            onClick={() => removeItem("companies", i)}
-                            className="ml-1 text-red-500 font-bold"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </span>
-                    ))}
+                <div className="space-y-2">
+                  <label className="font-bold block mb-2">Service Type</label>
+                  <div className="flex gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        disabled={!isEditing}
+                        name="serviceType"
+                        checked={userData.serviceType === "free"}
+                        onChange={() =>
+                          setUserData({ ...userData, serviceType: "free" })
+                        }
+                      />
+                      Free
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        disabled={!isEditing}
+                        name="serviceType"
+                        checked={userData.serviceType === "paid"}
+                        onChange={() =>
+                          setUserData({ ...userData, serviceType: "paid" })
+                        }
+                      />
+                      Paid
+                    </label>
                   </div>
                 </div>
 
                 <div className="col-span-1 md:col-span-2 space-y-2">
-                  <label className="font-bold">Hackathons</label>
-                  <div className="flex gap-2">
-                    <input
-                      disabled={!isEditing}
-                      value={hackathonInput}
-                      onChange={(e) => setHackathonInput(e.target.value)}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" &&
-                        addItem("hackathons", hackathonInput, setHackathonInput)
-                      }
-                      placeholder="Add hackathon..."
-                      className="w-full p-2 border rounded-xl disabled:bg-gray-100"
-                    />
-                    <button
-                      disabled={!isEditing}
-                      onClick={() =>
-                        addItem("hackathons", hackathonInput, setHackathonInput)
-                      }
-                      className="bg-blue-600 text-white px-4 rounded-xl disabled:opacity-50"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {userData.hackathons?.map((h, i) => (
-                      <span
-                        key={i}
-                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                      >
-                        {h}{" "}
-                        {isEditing && (
-                          <button
-                            onClick={() => removeItem("hackathons", i)}
-                            className="ml-1 text-red-500 font-bold"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </span>
-                    ))}
-                  </div>
+                  <label className="font-bold">
+                    Previous Companies (Comma separated)
+                  </label>
+                  <textarea
+                    disabled={!isEditing}
+                    value={companyString}
+                    onChange={(e) => setCompanyString(e.target.value)}
+                    placeholder="e.g. Amazon, Google, Startup"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500 h-20"
+                  />
+                </div>
+
+                <div className="col-span-1 md:col-span-2 space-y-2">
+                  <label className="font-bold">
+                    Hackathon Experience (Comma separated)
+                  </label>
+                  <textarea
+                    disabled={!isEditing}
+                    value={hackathonString}
+                    onChange={(e) => setHackathonString(e.target.value)}
+                    placeholder="e.g. SIH 2024, HackOct, Local Hack"
+                    className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500 h-20"
+                  />
                 </div>
               </>
             )}
 
             <div className="col-span-1 md:col-span-2 space-y-2">
-              <label className="font-bold">Skills *</label>
-              <div className="flex gap-2">
-                <input
-                  disabled={!isEditing}
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" &&
-                    addItem("skills", skillInput, setSkillInput)
-                  }
-                  placeholder="Add skill..."
-                  className="w-full p-2 border rounded-xl disabled:bg-gray-100"
-                />
-                <button
-                  disabled={!isEditing}
-                  onClick={() => addItem("skills", skillInput, setSkillInput)}
-                  className="bg-blue-600 text-white px-4 rounded-xl disabled:opacity-50"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {userData.skills?.map((s, i) => (
-                  <span
-                    key={i}
-                    className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                  >
-                    {s}{" "}
-                    {isEditing && (
-                      <button
-                        onClick={() => removeItem("skills", i)}
-                        className="ml-1 text-red-500 font-bold"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </span>
-                ))}
-              </div>
+              <label className="font-bold">
+                Skills & Expertise (Comma separated)
+              </label>
+              <textarea
+                disabled={!isEditing}
+                value={skillString}
+                onChange={(e) => setSkillString(e.target.value)}
+                placeholder="e.g. Python, Java, Leadership"
+                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-blue-500 disabled:bg-gray-100 disabled:text-gray-500 h-24"
+              />
             </div>
           </div>
         </div>
@@ -490,9 +506,18 @@ const ProfileContent = () => {
   );
 };
 
-const ProfilePage = () => (
-  <Suspense fallback={<div>Loading...</div>}>
-    <ProfileContent />
-  </Suspense>
-);
+const ProfilePage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <ProfileContent />
+    </Suspense>
+  );
+};
+
 export default ProfilePage;

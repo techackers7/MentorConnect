@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    // Check JWT_SECRET is configured
+    
     if (!process.env.JWT_SECRET) {
       console.error("JWT_SECRET is not configured");
       return NextResponse.json(

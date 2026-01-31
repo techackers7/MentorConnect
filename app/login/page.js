@@ -26,13 +26,13 @@ const LoginPage = () => {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // --- SAVE TO BROWSER STORAGE ---
+       
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        // -------------------------------
+       
 
         alert("Login Successful!");
-        window.location.href = "/";
+        window.location.href = "/"; 
       } else {
         alert(data.message);
       }

@@ -6,23 +6,20 @@ import { usePathname, useRouter } from "next/navigation";
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAuthLoaded, setIsAuthLoaded] = useState(false); // Prevents flicker
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const pathname = usePathname();
-  const router = useRouter();
 
   useEffect(() => {
-    // 1. Check LocalStorage instantly
+   
     const localToken = localStorage.getItem("token");
     if (localToken) {
       setIsLoggedIn(true);
       fetchUserProfile();
     } else {
       setIsLoggedIn(false);
+      setUserProfile(null);
     }
-    // 2. Mark auth as checked so buttons can appear
-    setIsAuthLoaded(true);
   }, [pathname]);
 
   const fetchUserProfile = async () => {
@@ -49,12 +46,13 @@ const Navbar = () => {
   };
 
   const getAvatar = () => {
-    if (!userProfile) return null; // Wait for data to load (Stops US flicker)
+    if (!userProfile) return null;
     if (userProfile.image) return userProfile.image;
-
     const name = userProfile.name || "User";
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=128&bold=true`;
   };
+
+  const avatarUrl = getAvatar();
 
   return (
     <nav className="bg-white shadow-md rounded-b-3xl mx-2 md:mx-5 mt-2 px-6 py-4 relative z-50">
@@ -78,17 +76,11 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex gap-4 items-center">
-          {/* Only render buttons when auth check is done */}
-          {isAuthLoaded ? (
-            <AuthButtons
-              isLoggedIn={isLoggedIn}
-              handleLogout={handleLogout}
-              avatarUrl={isLoggedIn ? getAvatar() : null}
-            />
-          ) : (
-            // Invisible placeholder prevents jump
-            <div className="w-24 h-10"></div>
-          )}
+          <AuthButtons
+            isLoggedIn={isLoggedIn}
+            handleLogout={handleLogout}
+            avatarUrl={avatarUrl}
+          />
         </div>
 
         <button
@@ -133,14 +125,12 @@ const Navbar = () => {
         <div className="md:hidden mt-4 flex flex-col gap-4 pb-4 border-t border-gray-100 pt-4 animate-fadeIn">
           <NavLinks pathname={pathname} mobile />
           <div className="flex flex-col gap-3 mt-2">
-            {isAuthLoaded && (
-              <AuthButtons
-                isLoggedIn={isLoggedIn}
-                handleLogout={handleLogout}
-                mobile
-                avatarUrl={isLoggedIn ? getAvatar() : null}
-              />
-            )}
+            <AuthButtons
+              isLoggedIn={isLoggedIn}
+              handleLogout={handleLogout}
+              mobile
+              avatarUrl={avatarUrl}
+            />
           </div>
         </div>
       )}

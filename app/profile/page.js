@@ -10,7 +10,6 @@ const ProfileContent = () => {
   const [companyString, setCompanyString] = useState("");
   const [hackathonString, setHackathonString] = useState("");
 
-  // --- Options from your Registration Page ---
   const degreeOptions = ["Select", "BTech", "MTech", "MBA", "PhD"];
   const levelOptions = [
     "Select",
@@ -64,11 +63,14 @@ const ProfileContent = () => {
           const user = data.user;
           setUserData(user);
 
+          // Populate the text areas
           setSkillString(
             Array.isArray(user.skills)
               ? user.skills.join(", ")
               : user.skills || "",
           );
+
+          // Only populate these if they exist (mainly for Mentors)
           setCompanyString(
             Array.isArray(user.companies)
               ? user.companies.join(", ")
@@ -79,8 +81,6 @@ const ProfileContent = () => {
               ? user.hackathons.join(", ")
               : user.hackathons || "",
           );
-        } else {
-          // Handle error silently or alert
         }
       } catch (err) {
         console.error(err);
@@ -113,38 +113,89 @@ const ProfileContent = () => {
   };
 
   const handleSave = async () => {
+    // 1. Process Arrays
     const finalSkills = skillString
       .split(",")
       .map((s) => s.trim())
       .filter((s) => s !== "");
-    const finalCompanies = companyString
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s !== "");
-    const finalHackathons = hackathonString
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s !== "");
 
-    const updatedData = {
-      ...userData,
+    // 2. Validate Common Fields
+    if (!userData.name || userData.name.trim() === "") {
+      alert("Name is required");
+      return;
+    }
+
+    if (!userData.degree || userData.degree === "Select") {
+      alert("Degree is required");
+      return;
+    }
+
+    if (finalSkills.length === 0) {
+      alert("Please add at least one skill");
+      return;
+    }
+
+    // 3. Construct Data Payload based on Role (THE FIX)
+    let payload = {
+      name: userData.name,
+      contact: userData.contact,
+      degree: userData.degree,
+      branch: userData.branch,
       skills: finalSkills,
-      companies: finalCompanies,
-      hackathons: finalHackathons,
+      image: userData.image,
     };
 
-    const { _id, ...cleanData } = updatedData;
+    // 4. If Mentor, validate and add Mentor-specific fields
+    if (userData.role === "mentor") {
+      if (!userData.YOG) {
+        alert("Year of Graduation is required for Mentors");
+        return;
+      }
+      if (!userData.level || userData.level === "Select") {
+        alert("Target Student Level is required");
+        return;
+      }
+      if (!userData.Commitment || userData.Commitment === "Select") {
+        alert("Time Commitment is required");
+        return;
+      }
+
+      // Process Mentor Arrays
+      const finalCompanies = companyString
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s !== "");
+      const finalHackathons = hackathonString
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s !== "");
+
+      // Add mentor fields to payload
+      payload = {
+        ...payload,
+        YOG: userData.YOG,
+        jobTitle: userData.jobTitle,
+        currentCompany: userData.currentCompany,
+        experience: userData.experience,
+        level: userData.level,
+        Commitment: userData.Commitment,
+        serviceType: userData.serviceType,
+        companies: finalCompanies,
+        hackathons: finalHackathons,
+      };
+    }
+    // If Student, 'payload' remains simple (no companies, no hackathons, etc.)
 
     try {
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cleanData),
+        body: JSON.stringify(payload), // Send the Clean Payload
       });
       const data = await res.json();
       if (data.success) {
         alert("Profile Updated Successfully!");
-        setUserData(updatedData);
+        setUserData({ ...userData, ...payload }); // Update local state with clean data
         setIsEditing(false);
       } else {
         alert("Update failed.");
@@ -178,7 +229,6 @@ const ProfileContent = () => {
     <div className="min-h-screen bg-[#fbfaf4]">
       <div className="max-w-5xl mx-auto py-10 px-4">
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          {/* Header & Image */}
           <div className="flex flex-col items-center mb-10">
             <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-md">
               <img
@@ -266,9 +316,10 @@ const ProfileContent = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 text-gray-700">
-            {/* Common Info */}
             <div className="space-y-2">
-              <label className="font-bold">Full Name</label>
+              <label className="font-bold">
+                Full Name <span className="text-red-500">*</span>
+              </label>
               <input
                 disabled={!isEditing}
                 value={userData.name || ""}
@@ -280,7 +331,9 @@ const ProfileContent = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="font-bold">Email (Read Only)</label>
+              <label className="font-bold">
+                Email (Read Only) <span className="text-red-500">*</span>
+              </label>
               <input
                 disabled
                 value={userData.email || ""}
@@ -289,7 +342,7 @@ const ProfileContent = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="font-bold">Contact</label>
+              <label className="font-bold">Contact Number</label>
               <input
                 disabled={!isEditing}
                 value={userData.contact || ""}
@@ -300,9 +353,10 @@ const ProfileContent = () => {
               />
             </div>
 
-            {/* Degree is now available for both Students and Mentors */}
             <div className="space-y-2">
-              <label className="font-bold">Degree</label>
+              <label className="font-bold">
+                Degree <span className="text-red-500">*</span>
+              </label>
               <select
                 disabled={!isEditing}
                 value={userData.degree || ""}
@@ -337,11 +391,12 @@ const ProfileContent = () => {
               </select>
             </div>
 
-            {/* Mentor Specific Fields */}
             {userData.role === "mentor" && (
               <>
                 <div className="space-y-2">
-                  <label className="font-bold">Year of Graduation</label>
+                  <label className="font-bold">
+                    Year of Graduation <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="number"
                     disabled={!isEditing}
@@ -394,7 +449,9 @@ const ProfileContent = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="font-bold">Target Student Level</label>
+                  <label className="font-bold">
+                    Target Student Level <span className="text-red-500">*</span>
+                  </label>
                   <select
                     disabled={!isEditing}
                     value={userData.level || ""}
@@ -412,7 +469,9 @@ const ProfileContent = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="font-bold">Time Commitment</label>
+                  <label className="font-bold">
+                    Time Commitment <span className="text-red-500">*</span>
+                  </label>
                   <select
                     disabled={!isEditing}
                     value={userData.Commitment || ""}
@@ -489,7 +548,8 @@ const ProfileContent = () => {
 
             <div className="col-span-1 md:col-span-2 space-y-2">
               <label className="font-bold">
-                Skills & Expertise (Comma separated)
+                Skills & Expertise (Comma separated){" "}
+                <span className="text-red-500">*</span>
               </label>
               <textarea
                 disabled={!isEditing}

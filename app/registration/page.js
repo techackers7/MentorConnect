@@ -19,7 +19,6 @@ const RegistrationContent = () => {
     });
   };
 
-
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -29,7 +28,7 @@ const RegistrationContent = () => {
       }
       try {
         const base64 = await convertToBase64(file);
-        setImage(base64); 
+        setImage(base64);
       } catch (error) {
         console.error("Image upload failed", error);
       }
@@ -109,6 +108,25 @@ const RegistrationContent = () => {
   };
 
   const SubmitStudent = async () => {
+    if (!name.trim()) {
+      alert("Name is required");
+      return;
+    }
+
+    if (!email.trim()) {
+      alert("Email is required");
+      return;
+    }
+
+    if (!degree) {
+      alert("Degree is required");
+      return;
+    }
+
+    if (studentSkills.length === 0) {
+      alert("Please add at least one skill");
+      return;
+    }
     if (password !== confirmPass) {
       alert(`Password and Confirm Password should be same`);
       return;
@@ -120,9 +138,10 @@ const RegistrationContent = () => {
         body: JSON.stringify({
           role: "student",
           name,
-          image, 
+          image,
           email,
           contact,
+          degree,
           branch,
           skills: studentSkills.map((s) => s.value),
           password,
@@ -134,6 +153,7 @@ const RegistrationContent = () => {
         alert("You registered successfully");
         setName("");
         setEmail("");
+        setDegree("");
         setContact("");
         setBranch("");
         setPassword("");
@@ -152,6 +172,20 @@ const RegistrationContent = () => {
   };
 
   const submitMentor = async () => {
+    if (
+      !name ||
+      !email ||
+      !degree ||
+      !YOG ||
+      mentorSkills.length === 0 ||
+      !level ||
+      !Commitment ||
+      !serviceType ||
+      !password
+    ) {
+      alert("Please fill all mandatory mentor fields");
+      return;
+    }
     if (password !== confirmPass) {
       alert("Password and Confirm Password should be same");
       return;
@@ -163,7 +197,7 @@ const RegistrationContent = () => {
         body: JSON.stringify({
           role: "mentor",
           name,
-          image, 
+          image,
           email,
           contact,
           degree,
@@ -216,6 +250,36 @@ const RegistrationContent = () => {
       alert("Something went wrong. Please try again.");
     }
   };
+  const branches = [
+    "Select",
+    "Computer Science Engineering",
+    "Computer Science and Engineering (Artificial Intelligence & Machine Learning)",
+    "Information Technology",
+    "Computer Engineering",
+    "Electronics and Communication Engineering",
+    "Electronics and Instrumentation Engineering",
+    "Electrical Engineering",
+    "Civil Engineering",
+    "Mechanical Engineering",
+    "Mechanical Engineering (AI & Robotics)",
+    "Textile Engineering",
+    "Biotechnology",
+    "Aerospace Engineering",
+    "Metallurgical and Materials Engineering",
+    "Chemistry",
+    "Mathematics and Computing",
+    "Physics",
+    "Energy System and Management",
+    "Industrial Engineering and Management",
+    "Mechanical System Design",
+    "Power Electronics and Drives",
+    "Robotics and Artificial Intelligence",
+    "Structural Engineering",
+    "VLSI Design and Embedded System",
+    "Water Resource Engineering",
+  ];
+
+  const [open, setOpen] = useState(false);
 
   return (
     <section className="min-h-screen bg-[#fbfaf4] py-20">
@@ -275,13 +339,15 @@ const RegistrationContent = () => {
                 type="file"
                 accept="image/*"
                 className="mt-4 text-sm border-[#ab9cdd] border-2 rounded-full "
-                onChange={handleImageUpload} 
+                onChange={handleImageUpload}
               />
             </div>
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold mb-1">Name</label>
+                <label className="block text-sm font-semibold mb-1">
+                  Name*
+                </label>
                 <input
                   value={name}
                   required
@@ -292,7 +358,7 @@ const RegistrationContent = () => {
 
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Email
+                  Email*
                 </label>
                 <input
                   type="email"
@@ -317,32 +383,61 @@ const RegistrationContent = () => {
                   className="w-full rounded-xl bg-[#ab9cdd] px-4 py-2 text-white focus:outline-none"
                 />
               </div>
-
+              <div>
+                <label className="block text-sm font-semibold mb-1">
+                  Degree*
+                </label>
+                <select
+                  value={degree}
+                  onChange={(e) => setDegree(e.target.value)}
+                  required
+                  className="w-full rounded-xl bg-[#ab9cdd] text-blue-50 py-2"
+                >
+                  <option>Select</option>
+                  <option>BTech</option>
+                  <option>MTech</option>
+                  <option>MBA</option>
+                  <option>PhD</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
                   Branch
                 </label>
-                <select
-                  value={branch}
-                  className="w-full rounded-xl bg-[#ab9cdd] px-4 py-2"
-                  required
-                  onChange={(e) => setBranch(e.target.value)}
-                >
-                  <option>Select</option>
-                  <option>CSE</option>
-                  <option>CSE(AIML)</option>
-                  <option>IT</option>
-                  <option>COE</option>
-                  <option>ECE</option>
-                  <option>ME</option>
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="w-full rounded-xl bg-[#ab9cdd] text-blue-50 px-4 py-2 text-left"
+                    onClick={() => setOpen(!open)}
+                  >
+                    {branch || "Select Branch"}
+                  </button>
+
+                  {open && (
+                    <div className="absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-xl bg-[#ab9cdd] text-blue-50 shadow-xl">
+                      {branches.map((b) => (
+                        <div
+                          key={b}
+                          onClick={() => {
+                            setBranch(b);
+                            setOpen(false);
+                          }}
+                          className="px-4 py-3 text-sm cursor-pointer hover:bg-blue-700"
+                        >
+                          {b}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Skills
+                  Skills*
                 </label>
-                <div className="flex gap-2">
+                <div className="w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   <input
                     type="text"
                     placeholder="e.g. Python"
@@ -350,15 +445,26 @@ const RegistrationContent = () => {
                     required
                     onChange={(e) => setStudentSkillInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addStudentSkills()}
-                    className="flex-1 rounded-xl bg-[#ab9cdd] px-4 py-2 text-white focus:outline-none"
+                      className="
+      w-full
+        rounded-xl bg-[#ab9cdd]
+        px-4 py-2
+        text-white
+        focus:outline-none
+    "
                   />
                   <button
                     type="button"
                     onClick={addStudentSkills}
-                    className="rounded-xl bg-blue-700 px-4 text-white font-semibold"
+                    className=" w-full sm:w-auto
+        bg-blue-700 text-white font-semibold
+        px-4 py-2
+        rounded-xl
+        shrink-0"
                   >
                     Add
                   </button>
+                </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                   {studentSkills.map((skill) => (
@@ -381,7 +487,7 @@ const RegistrationContent = () => {
 
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Create Password
+                  Create Password*
                 </label>
                 <div className="relative">
                   <input
@@ -405,7 +511,7 @@ const RegistrationContent = () => {
 
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Confirm Password
+                  Confirm Password*
                 </label>
                 <div className="relative">
                   <input
@@ -463,7 +569,9 @@ const RegistrationContent = () => {
             <div className="space-y-6">
               <label className="text-1xl font-bold">Basic Information</label>
               <div>
-                <label className="block text-sm font-semibold mb-1">Name</label>
+                <label className="block text-sm font-semibold mb-1">
+                  Name*
+                </label>
                 <input
                   value={name}
                   required
@@ -474,7 +582,7 @@ const RegistrationContent = () => {
 
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Email
+                  Email*
                 </label>
                 <input
                   type="email"
@@ -511,13 +619,13 @@ const RegistrationContent = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Degree
+                  Degree*
                 </label>
                 <select
                   value={degree}
                   onChange={(e) => setDegree(e.target.value)}
                   required
-                  className="w-full rounded-xl bg-[#ab9cdd] px-4 py-2"
+                  className="w-full rounded-xl bg-[#ab9cdd] text-blue-50 py-2"
                 >
                   <option>Select</option>
                   <option>BTech</option>
@@ -530,27 +638,39 @@ const RegistrationContent = () => {
                 <label className="block text-sm font-semibold mb-1">
                   Branch
                 </label>
-                <select
-                  value={branch}
-                  onChange={(e) => setBranch(e.target.value)}
-                  required
-                  className="w-full rounded-xl bg-[#ab9cdd] px-4 py-2"
-                >
-                  <option>Select</option>
-                  <option>CSE</option>
-                  <option>CSE(AIML)</option>
-                  <option>IT</option>
-                  <option>COE</option>
-                  <option>ECE</option>
-                  <option>ME</option>
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="w-full rounded-xl bg-[#ab9cdd] text-blue-50 px-4 py-2 text-left"
+                    onClick={() => setOpen(!open)}
+                  >
+                    {branch || "Select Branch"}
+                  </button>
+
+                  {open && (
+                    <div className="absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-xl bg-[#ab9cdd] text-blue-50 shadow-xl">
+                      {branches.map((b) => (
+                        <div
+                          key={b}
+                          onClick={() => {
+                            setBranch(b);
+                            setOpen(false);
+                          }}
+                          className="px-4 py-3 text-sm cursor-pointer hover:bg-blue-700"
+                        >
+                          {b}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label
                   htmlFor="yearOfGraduation"
                   className="block text-sm font-semibold mb-1"
                 >
-                  Year of Graduation
+                  Year of Graduation*
                 </label>
                 <input
                   type="number"
@@ -615,22 +735,35 @@ const RegistrationContent = () => {
                 <label className="block text-sm font-semibold mb-1">
                   Previous Companies
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="e.g. Amazon"
-                    value={companyInput}
-                    onChange={(e) => setCompanyInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addCompany()}
-                    className="flex-1 rounded-xl bg-[#ab9cdd] px-4 py-2 text-white focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCompany}
-                    className="rounded-xl bg-blue-700 px-4 text-white font-semibold"
-                  >
-                    Add
-                  </button>
+                <div className="w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. Amazon"
+                      value={companyInput}
+                      onChange={(e) => setCompanyInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addCompany()}
+                      // className="w-full rounded-xl bg-[#ab9cdd] pr-20 px-4 py-2 text-white focus:outline-none"
+                      className="
+      w-full
+        rounded-xl bg-[#ab9cdd]
+        px-4 py-2
+        text-white
+        focus:outline-none
+    "
+                    />
+                    <button
+                      type="button"
+                      onClick={addCompany}
+                      className=" w-full sm:w-auto
+        bg-blue-700 text-white font-semibold
+        px-4 py-2
+        rounded-xl
+        shrink-0"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-3">
@@ -655,22 +788,34 @@ const RegistrationContent = () => {
                 <label className="block text-sm font-semibold mb-1">
                   Hackathon Experience
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="e.g. SIH"
-                    value={hackathonInput}
-                    onChange={(e) => setHackathonInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addHackathon()}
-                    className="flex-1 rounded-xl bg-[#ab9cdd] px-4 py-2 text-white focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={addHackathon}
-                    className="rounded-xl bg-blue-700 px-4 text-white font-semibold"
-                  >
-                    Add
-                  </button>
+                <div className="w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. SIH"
+                      value={hackathonInput}
+                      onChange={(e) => setHackathonInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addHackathon()}
+                      className="
+      w-full
+        rounded-xl bg-[#ab9cdd]
+        px-4 py-2
+        text-white
+        focus:outline-none
+    "
+                    />
+                    <button
+                      type="button"
+                      onClick={addHackathon}
+                      className=" w-full sm:w-auto
+        bg-blue-700 text-white font-semibold
+        px-4 py-2
+        rounded-xl
+        shrink-0"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                   {hackathons.map((hackathon, index) => (
@@ -692,25 +837,37 @@ const RegistrationContent = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Skills & Expertise
+                  Skills & Expertise*
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="e.g. Python"
-                    value={mentorSkillInput}
-                    required
-                    onChange={(e) => setMentorSkillInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addMentorSkills()}
-                    className="flex-1 rounded-xl bg-[#ab9cdd] px-4 py-2 text-white focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={addMentorSkills}
-                    className="rounded-xl bg-blue-700 px-4 text-white font-semibold"
-                  >
-                    Add
-                  </button>
+                <div className="w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. Python"
+                      value={mentorSkillInput}
+                      required
+                      onChange={(e) => setMentorSkillInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addMentorSkills()}
+                      className="
+      w-full
+        rounded-xl bg-[#ab9cdd]
+        px-4 py-2
+        text-white
+        focus:outline-none
+    "
+                    />
+                    <button
+                      type="button"
+                      onClick={addMentorSkills}
+                      className=" w-full sm:w-auto
+        bg-blue-700 text-white font-semibold
+        px-4 py-2
+        rounded-xl
+        shrink-0"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                   {mentorSkills.map((skill) => (
@@ -735,7 +892,7 @@ const RegistrationContent = () => {
               </label>
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Target Student Level
+                  Target Student Level*
                 </label>
                 <select
                   className="w-full rounded-xl bg-[#ab9cdd] px-4 py-2"
@@ -752,7 +909,7 @@ const RegistrationContent = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Time Commitment
+                  Time Commitment*
                 </label>
                 <select
                   className="w-full rounded-xl bg-[#ab9cdd] px-4 py-2"
@@ -788,7 +945,7 @@ const RegistrationContent = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Create Password
+                  Create Password*
                 </label>
                 <div className="relative">
                   <input
@@ -812,7 +969,7 @@ const RegistrationContent = () => {
 
               <div>
                 <label className="block text-sm font-semibold mb-1">
-                  Confirm Password
+                  Confirm Password*
                 </label>
                 <div className="relative">
                   <input

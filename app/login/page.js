@@ -11,76 +11,38 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   try {
-  //     // DEMO MODE: Test login without database
-  //     if (email === "demo@test.com" && password === "demo123") {
-  //       const token = "demo-token-" + Date.now();
-  //       console.log("Demo login successful, token set:", token);
-  //       alert("Demo Login Successful!");
-  //       router.push("/");
-  //       return;
-  //     }
-
-  //     // REAL LOGIN: Try actual API
-  //     const res = await fetch("/api/login", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ email, password, role }),
-  //     });
-
-  //     const data = await res.json();
-
-  //     if (res.ok && data.success) {
-  //       // Store token in localStorage for client-side checking
-  //       if (res.ok && data.success) {
-  //         alert("Login Successful!");
-  //         router.push("/");
-  //       }
-
-  //       alert("Login Successful!");
-  //       router.push("/");
-  //     } else {
-  //       alert(data.message);
-  //     }
-  //   } catch (error) {
-  //     console.error("Login error:", error);
-  //     alert("Something went wrong. Please check your connection.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, password, role }),
-    });
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password, role }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok && data.success) {
-      alert("Login Successful!");
-      router.replace("/");
-      router.refresh();
-    } else {
-      alert(data.message);
+      if (res.ok && data.success) {
+        // --- SAVE TO BROWSER STORAGE ---
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        // -------------------------------
+
+        alert("Login Successful!");
+        window.location.href = "/";
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Something went wrong.");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Login error:", error);
-    alert("Something went wrong. Please check your connection.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <section className="min-h-screen bg-[#fbfaf4] flex items-center justify-center py-20">
@@ -168,14 +130,12 @@ const LoginPage = () => {
           </button>
         </form>
         <div className="flex justify-end pt-1">
-          <p>
-            <Link
-              className="font-bold text-blue-600 hover:underline text-sm"
-              href="/forgotPassword"
-            >
-              Forgot Password?
-            </Link>
-          </p>
+          <Link
+            className="font-bold text-blue-600 hover:underline text-sm"
+            href="/forgotPassword"
+          >
+            Forgot Password?
+          </Link>
         </div>
         <div className="text-center mt-4">
           <p className="text-sm text-gray-600">
